@@ -90,30 +90,21 @@
         <tag>HEAD</tag>
     </scm>
 
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>mavencentral</id>
-            <name>Maven central</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-        </pluginRepository>
-    </pluginRepositories>
-
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>gebit-releases</id>
+            <name>GEBIT-internal release repository</name>
+            <url>https://gebit-nexus.local.gebit.de/content/repositories/gebit-releases/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
         </repository>
+        <snapshotRepository>
+            <id>gebit-snapshots</id>
+            <name>GEBIT-internal snapshot repository</name>
+            <url>https://gebit-nexus.local.gebit.de/content/repositories/gebit-snapshots/</url>
+            <releases><enabled>false</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </snapshotRepository>
     </distributionManagement>
 
     <issueManagement>
