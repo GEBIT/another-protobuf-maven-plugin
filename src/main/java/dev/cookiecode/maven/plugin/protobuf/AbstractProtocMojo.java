@@ -45,6 +45,7 @@ import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.io.RawInputStreamFacade;
 import org.sonatype.plexus.build.incremental.BuildContext;
+import org.sonatype.plexus.build.incremental.DefaultBuildContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -438,6 +439,18 @@ abstract class AbstractProtocMojo extends AbstractMojo {
     private boolean useModuleWorkingDirectory;
 
     /**
+     * Specifies if the build will fail if there are errors during protoc execution or not.
+     *
+     * @since 2.2.0
+     */
+    @Parameter(
+            required = false,
+            property = "protoc.failOnError",
+            defaultValue = "true"
+    )
+    private boolean failOnError;
+
+    /**
      * Executes the mojo.
      */
     @Override
@@ -546,12 +559,16 @@ abstract class AbstractProtocMojo extends AbstractMojo {
                     }
                     if (exitStatus != 0) {
                         getLog().error("PROTOC FAILED: " + protoc.getError());
-                        for (File pf : protoFiles) {
-                            buildContext.removeMessages(pf);
-                            buildContext.addMessage(pf, 0, 0, protoc.getError(), BuildContext.SEVERITY_ERROR, null);
+                        if (!(buildContext instanceof DefaultBuildContext)) {
+                            for (File pf : protoFiles) {
+                                buildContext.removeMessages(pf);
+                                buildContext.addMessage(pf, 0, 0, protoc.getError(), BuildContext.SEVERITY_ERROR, null);
+                            }
                         }
-                        throw new MojoFailureException(
-                                "protoc did not exit cleanly. Review output for more information.");
+                        if (failOnError) {
+                            throw new MojoFailureException(
+                                    "protoc did not exit cleanly. Review output for more information.");
+                        }
                     } else if (StringUtils.isNotBlank(protoc.getError())) {
                         getLog().warn("PROTOC: " + protoc.getError());
                     }
