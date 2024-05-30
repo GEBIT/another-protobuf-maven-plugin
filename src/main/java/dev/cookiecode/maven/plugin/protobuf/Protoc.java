@@ -49,6 +49,11 @@ final class Protoc {
     private final String executable;
 
     /**
+     * Path to the working directory where protoc should be called from.
+     */
+    private final File workingDirectory;
+
+    /**
      * A set of directories in which to search for definition imports.
      */
     private final List<File> protoPathElements;
@@ -130,6 +135,7 @@ final class Protoc {
      * Constructs a new instance. This should only be used by the {@link Builder}.
      *
      * @param executable path to the {@code protoc} executable.
+     * @param workingDirectory path to the working directory where protoc should be called from.
      * @param protoPath a set of directories in which to search for definition imports.
      * @param protoFiles a set of protobuf definitions to process.
      * @param javaOutputDirectory a directory into which Java source files will be generated.
@@ -154,6 +160,7 @@ final class Protoc {
      */
     private Protoc(
             final String executable,
+            final File workingDirectory,
             final List<File> protoPath,
             final List<File> protoFiles,
             final File javaOutputDirectory,
@@ -184,6 +191,7 @@ final class Protoc {
             throw new MojoConfigurationException("'protoFiles' is null");
         }
         this.executable = executable;
+        this.workingDirectory = workingDirectory;
         this.protoPathElements = protoPath;
         this.protoFiles = protoFiles;
         this.javaOutputDirectory = javaOutputDirectory;
@@ -218,6 +226,9 @@ final class Protoc {
     public int execute(final Log log) throws CommandLineException, InterruptedException {
         final Commandline cl = new Commandline();
         cl.setExecutable(executable);
+        if (workingDirectory != null) {
+            cl.setWorkingDirectory(workingDirectory);
+        }
         String[] args = buildProtocCommand().toArray(new String[] {});
         if (useArgumentFile) {
             try {
@@ -335,6 +346,10 @@ final class Protoc {
         if (log.isDebugEnabled()) {
             log.debug(LOG_PREFIX + "Executable: ");
             log.debug(LOG_PREFIX + ' ' + executable);
+
+            log.debug(LOG_PREFIX + "Working directory: ");
+            log.debug(LOG_PREFIX + ' '
+                    + (workingDirectory != null ? workingDirectory.getAbsolutePath() : new File("").getAbsolutePath()));
 
             if (protoPathElements != null && !protoPathElements.isEmpty()) {
                 log.debug(LOG_PREFIX + "Protobuf import paths:");
@@ -459,6 +474,8 @@ final class Protoc {
          */
         private final String executable;
 
+        private final File workingDirectory;
+
         private final LinkedHashSet<File> protopathElements;
 
         private final List<File> protoFiles;
@@ -523,12 +540,14 @@ final class Protoc {
          * Constructs a new builder.
          *
          * @param executable The path to the {@code protoc} executable.
+         * @param workingDirectory The path to the working directory where protoc should be called from.
          */
-        Builder(final String executable) {
+        Builder(final String executable, final File workingDirectory) {
             if (executable == null) {
                 throw new MojoConfigurationException("'executable' is null");
             }
             this.executable = executable;
+            this.workingDirectory = workingDirectory;
             protoFiles = new ArrayList<>();
             protopathElements = new LinkedHashSet<>();
             plugins = new ArrayList<>();
@@ -866,6 +885,7 @@ final class Protoc {
             validateState();
             return new Protoc(
                     executable,
+                    workingDirectory,
                     new ArrayList<>(protopathElements),
                     protoFiles,
                     javaOutputDirectory,

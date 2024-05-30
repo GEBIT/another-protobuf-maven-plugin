@@ -426,6 +426,18 @@ abstract class AbstractProtocMojo extends AbstractMojo {
     private boolean sortProtoFiles;
 
     /**
+     * Specifies if the directory of the current maven module should be used as working directory for the protoc call.
+     *
+     * @since 2.2.0
+     */
+    @Parameter(
+            required = false,
+            property = "protoc.useModuleWorkingDirectory",
+            defaultValue = "false"
+    )
+    private boolean useModuleWorkingDirectory;
+
+    /**
      * Executes the mojo.
      */
     @Override
@@ -498,7 +510,7 @@ abstract class AbstractProtocMojo extends AbstractMojo {
                     }
 
                     final Protoc.Builder protocBuilder =
-                            new Protoc.Builder(protocExecutable)
+                            new Protoc.Builder(protocExecutable, useModuleWorkingDirectory ? project.getBasedir() : null)
                                     .addProtoPathElement(protoSourceRoot)
                                     .addProtoPathElements(derivedProtoPathElements)
                                     .addProtoPathElements(asList(additionalProtoPathElements))
