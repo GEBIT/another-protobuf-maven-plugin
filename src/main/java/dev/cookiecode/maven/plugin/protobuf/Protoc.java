@@ -17,6 +17,7 @@ package dev.cookiecode.maven.plugin.protobuf;
  */
 
 import org.apache.maven.plugin.logging.Log;
+import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.CommandLineUtils.StringStreamConsumer;
@@ -28,6 +29,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.codehaus.plexus.util.StringUtils.join;
@@ -42,6 +45,8 @@ final class Protoc {
      * Prefix for logging the debug messages.
      */
     public static final String LOG_PREFIX = "[PROTOC] ";
+
+    private static final Pattern ABSOLUTE_WIN_PATH_PATTERN = Pattern.compile("^([a-zA-Z]):[\\\\\\/].*$");
 
     /**
      * Path to the {@code protoc} executable.
@@ -748,11 +753,40 @@ final class Protoc {
             if (nativePluginParameter == null) {
                 throw new MojoConfigurationException("'nativePluginParameter' is null");
             }
-            if (nativePluginParameter.contains(":")) {
-                throw new MojoConfigurationException("'nativePluginParameter' contains illegal characters");
+            String normilizedParameter = nativePluginParameter;
+            if (normilizedParameter.contains(":")) {
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    normilizedParameter = convertAbsoluteWinPathsToUnc(normilizedParameter);
+                }
+                if (normilizedParameter.contains(":")) {
+                    throw new MojoConfigurationException("'nativePluginParameter' contains illegal characters");
+                }
             }
-            this.nativePluginParameter = nativePluginParameter;
+            this.nativePluginParameter = normilizedParameter;
             return this;
+        }
+
+        private String convertAbsoluteWinPathsToUnc(final String nativePluginParameter) {
+            String[] options = nativePluginParameter.split(",");
+            for (int i = 0; i < options.length; i++) {
+                String[] optionParts = options[i].split("=", 2);
+                if (optionParts.length == 2) {
+                    String optionValue = optionParts[1];
+                    if (optionValue.contains(":")) {
+                        Matcher matcher = ABSOLUTE_WIN_PATH_PATTERN.matcher(optionValue);
+                        if (matcher.matches()) {
+                            String drive = matcher.group(1);
+                            String pathPrefix = drive + ":";
+                            String uncPrefix = "\\\\localhost\\" + drive + "$";
+                            if (new File(pathPrefix + "\\").exists() && new File(uncPrefix + "\\").exists()) {
+                                optionValue = optionValue.replace(pathPrefix, uncPrefix);
+                                options[i] = String.join("=", optionParts[0], optionValue);
+                            }
+                        }
+                    }
+                }
+            }
+            return String.join(",", options);
         }
 
         public Builder setExtraArgs(final String extraArgs) {
