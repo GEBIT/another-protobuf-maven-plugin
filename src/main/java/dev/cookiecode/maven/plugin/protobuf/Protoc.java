@@ -318,6 +318,13 @@ final class Protoc {
                 outputOption += nativePluginParameter + ':';
             }
 
+            // Ugly quick fix for getting execution of protoc plugin written in java to work
+            if (plugins.size() == 1) {
+                ProtocPlugin plugin = plugins.get(0);
+                final File pluginExecutable = plugin.getPluginExecutableFile(pluginDirectory);
+                command.add("--plugin=protoc-gen-" + plugin.getId() + '=' + pluginExecutable);
+            }
+
             outputOption += customOutputDirectory;
             command.add(outputOption);
         }
