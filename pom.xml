@@ -24,7 +24,7 @@
     <artifactId>another-protobuf-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>Another Maven Protocol Buffers Plugin</name>
-    <version>2.2.0-gebit2</version>
+    <version>2.2.0-gebit3</version>
     <url>https://github.com/sebastienvermeille/another-protobuf-maven-plugin</url>
     <description>Maven Plugin that executes the Protocol Buffers (protoc) compiler</description>
     <inceptionYear>2021</inceptionYear>
